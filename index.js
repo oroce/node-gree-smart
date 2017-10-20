@@ -65,7 +65,10 @@ client.on('message', (msg, rinfo) => {
       pack: encryptedStatusMessage
     };
     const toSend = new Buffer(JSON.stringify(statusRequest));
-    client.send(toSend, 0, toSend.length, device.port, device.address);
+    setInterval(() => {
+      client.send(toSend, 0, toSend.length, device.port, device.address);
+    }, 5000);
+    setTemp(device);
     return;
   }
   if (pack.t === 'dat') {
@@ -83,7 +86,23 @@ client.on('message', (msg, rinfo) => {
   
   console.log('unknown message %s', pack.t, message, pack);
 });
-
+function setTemp(device) {
+  const tempMessage = {
+    opt: ['TemUn', 'SetTem'],
+    p: [0, 22],
+    t: 'cmd'
+  };
+  const encryptedTempMessage = encrypt(tempMessage, device.key);
+  const tempRequest = {
+    cid: 'app',
+    i: 0,
+    t: 'pack',
+    uid: 0,
+    pack: encryptedTempMessage
+  };
+  const toSend = new Buffer(JSON.stringify(tempRequest));
+  client.send(toSend, 0, toSend.length, device.port, device.address);
+}
 function send() {
   const message = new Buffer(JSON.stringify({t: 'scan'}));
   client.send(message, 0, message.length, 7000, '192.168.1.255');
