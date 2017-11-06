@@ -17,7 +17,7 @@ client.on('message', (buff, rinfo) => {
   }
   reqs[msg.t] = (reqs[msg.t] || 0) + 1;
   const packet = msg.pack ? decrypt(msg, msg.i === 1 ? AES_GENERAL_KEY : AES_DEVICE_KEY) : {};
-  console.log('Message arrived', msg, packet);
+  console.log('Message arrived', msg, JSON.stringify(packet, null, 2));
   if (msg.t === 'scan') {
     console.log('reply');
     return send(client, rinfo, pack({
@@ -90,7 +90,24 @@ client.on('message', (buff, rinfo) => {
           'HeatCoolType',
           'TemRec',
           'SvSt'],
-        dat: [0, 1, 22, 3, 0, 0, 0, 0, 1, 0, 11, 0, 0, 0, 0, 0, 0, 0]
+        dat: [1, 1, 22, 3, 0, 0, 0, 0, 1, 0, 11, 0, 0, 0, 0, 0, 0, 0]
+      }
+    }, AES_DEVICE_KEY));
+  }
+  if (packet.t === 'cmd') {
+    return send(client, rinfo, pack({
+      t: 'pack',
+      i: 0,
+      uid: 0,
+      cid: 'foo',
+      tcid: '',
+      pack: {
+        t: 'res',
+        mac: 'foo-mac',
+        r: 200,
+        opt: packet.opt,
+        p: packet.p,
+        val: packet.p
       }
     }, AES_DEVICE_KEY))
   }
@@ -122,5 +139,7 @@ function decrypt(input, key = AES_GENERAL_KEY) {
   return response;
   } catch (x) {
     console.error('failed to decrypt', input);
+    console.error(x);
+    process.exit(1);
   }
 }
